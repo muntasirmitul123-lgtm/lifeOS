@@ -1,0 +1,692 @@
+{
+  "entities": {
+    "UserPreference": {
+      "title": "UserPreference",
+      "description": "Persistent user preferences, working hours, focus timer presets, and daily energy state.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID of the user who owns this preference document."
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["dark", "light"],
+          "minLength": 4,
+          "maxLength": 10,
+          "description": "UI color theme preference."
+        },
+        "energyLevel": {
+          "type": "string",
+          "enum": ["low", "moderate", "high"],
+          "minLength": 3,
+          "maxLength": 12,
+          "description": "Current daily energy level."
+        },
+        "energyNote": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 500,
+          "description": "Optional note about current capacity."
+        },
+        "focusDuration": {
+          "type": "number",
+          "description": "Default focus session length in minutes (1-240)."
+        },
+        "shortBreakDuration": {
+          "type": "number",
+          "description": "Short break length in minutes (1-60)."
+        },
+        "longBreakDuration": {
+          "type": "number",
+          "description": "Long break length in minutes (1-120)."
+        },
+        "workStartHour": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 10,
+          "description": "Daily working hours start time in HH:mm."
+        },
+        "workEndHour": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 10,
+          "description": "Daily working hours end time in HH:mm."
+        },
+        "weekStartsOn": {
+          "type": "string",
+          "enum": ["monday", "sunday"],
+          "minLength": 6,
+          "maxLength": 10,
+          "description": "Preferred first day of the week."
+        },
+        "gamificationEnabled": {
+          "type": "boolean",
+          "description": "Whether Personal Progress XP and levels are enabled."
+        },
+        "remindersEnabled": {
+          "type": "boolean",
+          "description": "Whether browser notifications and reminders are enabled."
+        },
+        "topPriorities": {
+          "type": "array",
+          "description": "Up to 3 task IDs selected as top priorities for today."
+        },
+        "visibleSections": {
+          "type": "array",
+          "description": "Customizable Today dashboard section identifiers."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server modification timestamp."
+        }
+      },
+      "required": [
+        "ownerId",
+        "theme",
+        "energyLevel",
+        "energyNote",
+        "focusDuration",
+        "shortBreakDuration",
+        "longBreakDuration",
+        "workStartHour",
+        "workEndHour",
+        "weekStartsOn",
+        "gamificationEnabled",
+        "remindersEnabled",
+        "topPriorities",
+        "visibleSections",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "Core task entity supporting scheduling, priorities, subtasks, dependencies, and energy.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "description": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 5000
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["low", "normal", "high", "urgent"],
+          "minLength": 3,
+          "maxLength": 10
+        },
+        "dueDate": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 40
+        },
+        "startDate": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 40
+        },
+        "scheduledStart": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 40
+        },
+        "scheduledEnd": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 40
+        },
+        "estimatedMinutes": {
+          "type": "number"
+        },
+        "actualMinutes": {
+          "type": "number"
+        },
+        "category": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 100
+        },
+        "projectId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "milestoneId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "tags": {
+          "type": "array"
+        },
+        "subtasks": {
+          "type": "array"
+        },
+        "dependencyIds": {
+          "type": "array"
+        },
+        "recurrence": {
+          "type": "string",
+          "enum": ["none", "daily", "weekdays", "weekly", "monthly"],
+          "minLength": 4,
+          "maxLength": 12
+        },
+        "energyRequired": {
+          "type": "string",
+          "enum": ["low", "moderate", "high", "any"],
+          "minLength": 3,
+          "maxLength": 12
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "title",
+        "description",
+        "completed",
+        "priority",
+        "dueDate",
+        "startDate",
+        "scheduledStart",
+        "scheduledEnd",
+        "estimatedMinutes",
+        "actualMinutes",
+        "category",
+        "projectId",
+        "milestoneId",
+        "tags",
+        "subtasks",
+        "dependencyIds",
+        "recurrence",
+        "energyRequired",
+        "archived",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CalendarEvent": {
+      "title": "CalendarEvent",
+      "description": "Calendar appointments and time-blocked task slots.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["event", "timeblock"],
+          "minLength": 5,
+          "maxLength": 12
+        },
+        "date": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "startTime": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "endTime": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "taskId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "projectId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "category": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 100
+        },
+        "location": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 300
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 3000
+        },
+        "recurrence": {
+          "type": "string",
+          "enum": ["none", "daily", "weekdays", "weekly", "monthly"],
+          "minLength": 4,
+          "maxLength": 12
+        },
+        "isFixed": {
+          "type": "boolean"
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "title",
+        "kind",
+        "date",
+        "startTime",
+        "endTime",
+        "taskId",
+        "projectId",
+        "category",
+        "location",
+        "notes",
+        "recurrence",
+        "isFixed",
+        "completed",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "KnowledgeItem": {
+      "title": "KnowledgeItem",
+      "description": "Second Brain items: Inbox quick captures, structured notes, ideas, and Brain Dump transcripts.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "itemType": {
+          "type": "string",
+          "enum": ["inbox", "note", "idea", "brain_dump"],
+          "minLength": 4,
+          "maxLength": 12
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "content": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 20000
+        },
+        "ideaStatus": {
+          "type": "string",
+          "enum": ["raw", "exploring", "active", "archived", "none"],
+          "minLength": 3,
+          "maxLength": 12
+        },
+        "whyItMatters": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 2000
+        },
+        "nextAction": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 500
+        },
+        "relatedLinks": {
+          "type": "array"
+        },
+        "linkedProjectId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "linkedGoalId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "category": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 100
+        },
+        "tags": {
+          "type": "array"
+        },
+        "pinned": {
+          "type": "boolean"
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "itemType",
+        "title",
+        "content",
+        "ideaStatus",
+        "whyItMatters",
+        "nextAction",
+        "relatedLinks",
+        "linkedProjectId",
+        "linkedGoalId",
+        "category",
+        "tags",
+        "pinned",
+        "archived",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ProjectOrGoal": {
+      "title": "ProjectOrGoal",
+      "description": "Projects, project milestones, and short/medium/long-term goals.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "recordType": {
+          "type": "string",
+          "enum": ["project", "milestone", "goal"],
+          "minLength": 4,
+          "maxLength": 12
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "description": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 5000
+        },
+        "status": {
+          "type": "string",
+          "enum": ["not_started", "active", "on_hold", "completed", "archived"],
+          "minLength": 6,
+          "maxLength": 15
+        },
+        "category": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 100
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["low", "normal", "high", "urgent"],
+          "minLength": 3,
+          "maxLength": 10
+        },
+        "startDate": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 40
+        },
+        "targetDate": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 40
+        },
+        "parentProjectId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "linkedGoalId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "measurableOutcome": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 1000
+        },
+        "progress": {
+          "type": "number"
+        },
+        "isManualProgress": {
+          "type": "boolean"
+        },
+        "nextAction": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "recordType",
+        "name",
+        "description",
+        "status",
+        "category",
+        "priority",
+        "startDate",
+        "targetDate",
+        "parentProjectId",
+        "linkedGoalId",
+        "measurableOutcome",
+        "progress",
+        "isManualProgress",
+        "nextAction",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "HabitOrLog": {
+      "title": "HabitOrLog",
+      "description": "Habits, habit occurrences, focus sessions, daily/weekly reviews, XP transactions, and achievements.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "logType": {
+          "type": "string",
+          "enum": [
+            "habit",
+            "habit_occurrence",
+            "focus_session",
+            "daily_review",
+            "weekly_review",
+            "xp_transaction",
+            "achievement"
+          ],
+          "minLength": 5,
+          "maxLength": 20
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "description": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 10000
+        },
+        "category": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 100
+        },
+        "icon": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 50
+        },
+        "scheduleType": {
+          "type": "string",
+          "enum": ["daily", "weekdays", "weekly", "custom", "none"],
+          "minLength": 4,
+          "maxLength": 12
+        },
+        "scheduleDays": {
+          "type": "array"
+        },
+        "targetFrequency": {
+          "type": "number"
+        },
+        "date": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 40
+        },
+        "occurrenceStatus": {
+          "type": "string",
+          "enum": ["completed", "skipped", "missed", "none"],
+          "minLength": 4,
+          "maxLength": 12
+        },
+        "durationMinutes": {
+          "type": "number"
+        },
+        "xpAmount": {
+          "type": "number"
+        },
+        "sourceEntityId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "entries": {
+          "type": "array"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "logType",
+        "title",
+        "description",
+        "category",
+        "icon",
+        "scheduleType",
+        "scheduleDays",
+        "targetFrequency",
+        "date",
+        "occurrenceStatus",
+        "durationMinutes",
+        "xpAmount",
+        "sourceEntityId",
+        "archived",
+        "entries",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/user_preferences/{userId}": {
+      "schema": { "$ref": "#/entities/UserPreference" },
+      "description": "Per-user configuration, energy state, and preferences."
+    },
+    "/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "User tasks and subtasks."
+    },
+    "/calendar_events/{eventId}": {
+      "schema": { "$ref": "#/entities/CalendarEvent" },
+      "description": "User calendar events and time blocks."
+    },
+    "/knowledge_items/{itemId}": {
+      "schema": { "$ref": "#/entities/KnowledgeItem" },
+      "description": "Second Brain inbox items, notes, ideas, and brain dumps."
+    },
+    "/projects_goals/{recordId}": {
+      "schema": { "$ref": "#/entities/ProjectOrGoal" },
+      "description": "Projects, milestones, and goals."
+    },
+    "/habits_logs/{logId}": {
+      "schema": { "$ref": "#/entities/HabitOrLog" },
+      "description": "Habits, habit occurrences, focus sessions, reviews, XP logs, and achievements."
+    }
+  }
+}

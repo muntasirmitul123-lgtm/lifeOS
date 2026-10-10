@@ -1,0 +1,394 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default-Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Hardened Primitives
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidOptionalId(id) {
+      return id is string && id.size() >= 0 && id.size() <= 128 && (id.size() == 0 || id.matches('^[a-zA-Z0-9_\\-]+$'));
+    }
+
+    function isValidStringList(arr, maxItems, maxElemLen) {
+      return arr is list && arr.size() <= maxItems && (arr.size() == 0 || (arr[0] is string && arr[0].size() <= maxElemLen));
+    }
+
+    // 3. Entity Validation Blueprints
+    function isValidUserPreference(data) {
+      return data.keys().hasAll([
+          'ownerId', 'theme', 'energyLevel', 'energyNote',
+          'focusDuration', 'shortBreakDuration', 'longBreakDuration',
+          'workStartHour', 'workEndHour', 'weekStartsOn',
+          'gamificationEnabled', 'remindersEnabled',
+          'topPriorities', 'visibleSections', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'theme', 'energyLevel', 'energyNote',
+          'focusDuration', 'shortBreakDuration', 'longBreakDuration',
+          'workStartHour', 'workEndHour', 'weekStartsOn',
+          'gamificationEnabled', 'remindersEnabled',
+          'topPriorities', 'visibleSections', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.theme is string && data.theme.size() >= 4 && data.theme.size() <= 10 && data.theme in ['dark', 'light']
+        && data.energyLevel is string && data.energyLevel.size() >= 3 && data.energyLevel.size() <= 12 && data.energyLevel in ['low', 'moderate', 'high']
+        && data.energyNote is string && data.energyNote.size() >= 0 && data.energyNote.size() <= 500
+        && data.focusDuration is number && data.focusDuration >= 1 && data.focusDuration <= 240
+        && data.shortBreakDuration is number && data.shortBreakDuration >= 1 && data.shortBreakDuration <= 60
+        && data.longBreakDuration is number && data.longBreakDuration >= 1 && data.longBreakDuration <= 120
+        && data.workStartHour is string && data.workStartHour.size() >= 0 && data.workStartHour.size() <= 10
+        && data.workEndHour is string && data.workEndHour.size() >= 0 && data.workEndHour.size() <= 10
+        && data.weekStartsOn is string && data.weekStartsOn.size() >= 6 && data.weekStartsOn.size() <= 10 && data.weekStartsOn in ['monday', 'sunday']
+        && data.gamificationEnabled is bool
+        && data.remindersEnabled is bool
+        && isValidStringList(data.topPriorities, 3, 128)
+        && isValidStringList(data.visibleSections, 15, 64)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTask(data) {
+      return data.keys().hasAll([
+          'ownerId', 'title', 'description', 'completed', 'priority',
+          'dueDate', 'startDate', 'scheduledStart', 'scheduledEnd',
+          'estimatedMinutes', 'actualMinutes', 'category', 'projectId',
+          'milestoneId', 'tags', 'subtasks', 'dependencyIds',
+          'recurrence', 'energyRequired', 'archived', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'title', 'description', 'completed', 'priority',
+          'dueDate', 'startDate', 'scheduledStart', 'scheduledEnd',
+          'estimatedMinutes', 'actualMinutes', 'category', 'projectId',
+          'milestoneId', 'tags', 'subtasks', 'dependencyIds',
+          'recurrence', 'energyRequired', 'archived', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 300
+        && data.description is string && data.description.size() >= 0 && data.description.size() <= 5000
+        && data.completed is bool
+        && data.priority is string && data.priority.size() >= 3 && data.priority.size() <= 10 && data.priority in ['low', 'normal', 'high', 'urgent']
+        && data.dueDate is string && data.dueDate.size() >= 0 && data.dueDate.size() <= 40
+        && data.startDate is string && data.startDate.size() >= 0 && data.startDate.size() <= 40
+        && data.scheduledStart is string && data.scheduledStart.size() >= 0 && data.scheduledStart.size() <= 40
+        && data.scheduledEnd is string && data.scheduledEnd.size() >= 0 && data.scheduledEnd.size() <= 40
+        && data.estimatedMinutes is number && data.estimatedMinutes >= 0 && data.estimatedMinutes <= 1440
+        && data.actualMinutes is number && data.actualMinutes >= 0 && data.actualMinutes <= 10000
+        && data.category is string && data.category.size() >= 0 && data.category.size() <= 100
+        && isValidOptionalId(data.projectId)
+        && isValidOptionalId(data.milestoneId)
+        && isValidStringList(data.tags, 20, 64)
+        && isValidStringList(data.subtasks, 50, 300)
+        && isValidStringList(data.dependencyIds, 20, 128)
+        && data.recurrence is string && data.recurrence.size() >= 4 && data.recurrence.size() <= 12 && data.recurrence in ['none', 'daily', 'weekdays', 'weekly', 'monthly']
+        && data.energyRequired is string && data.energyRequired.size() >= 3 && data.energyRequired.size() <= 12 && data.energyRequired in ['low', 'moderate', 'high', 'any']
+        && data.archived is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCalendarEvent(data) {
+      return data.keys().hasAll([
+          'ownerId', 'title', 'kind', 'date', 'startTime', 'endTime',
+          'taskId', 'projectId', 'category', 'location', 'notes',
+          'recurrence', 'isFixed', 'completed', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'title', 'kind', 'date', 'startTime', 'endTime',
+          'taskId', 'projectId', 'category', 'location', 'notes',
+          'recurrence', 'isFixed', 'completed', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 300
+        && data.kind is string && data.kind.size() >= 5 && data.kind.size() <= 12 && data.kind in ['event', 'timeblock']
+        && data.date is string && data.date.size() >= 1 && data.date.size() <= 40
+        && data.startTime is string && data.startTime.size() >= 1 && data.startTime.size() <= 20
+        && data.endTime is string && data.endTime.size() >= 1 && data.endTime.size() <= 20
+        && isValidOptionalId(data.taskId)
+        && isValidOptionalId(data.projectId)
+        && data.category is string && data.category.size() >= 0 && data.category.size() <= 100
+        && data.location is string && data.location.size() >= 0 && data.location.size() <= 300
+        && data.notes is string && data.notes.size() >= 0 && data.notes.size() <= 3000
+        && data.recurrence is string && data.recurrence.size() >= 4 && data.recurrence.size() <= 12 && data.recurrence in ['none', 'daily', 'weekdays', 'weekly', 'monthly']
+        && data.isFixed is bool
+        && data.completed is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidKnowledgeItem(data) {
+      return data.keys().hasAll([
+          'ownerId', 'itemType', 'title', 'content', 'ideaStatus',
+          'whyItMatters', 'nextAction', 'relatedLinks', 'linkedProjectId',
+          'linkedGoalId', 'category', 'tags', 'pinned', 'archived',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'itemType', 'title', 'content', 'ideaStatus',
+          'whyItMatters', 'nextAction', 'relatedLinks', 'linkedProjectId',
+          'linkedGoalId', 'category', 'tags', 'pinned', 'archived',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.itemType is string && data.itemType.size() >= 4 && data.itemType.size() <= 12 && data.itemType in ['inbox', 'note', 'idea', 'brain_dump']
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 300
+        && data.content is string && data.content.size() >= 0 && data.content.size() <= 20000
+        && data.ideaStatus is string && data.ideaStatus.size() >= 3 && data.ideaStatus.size() <= 12 && data.ideaStatus in ['raw', 'exploring', 'active', 'archived', 'none']
+        && data.whyItMatters is string && data.whyItMatters.size() >= 0 && data.whyItMatters.size() <= 2000
+        && data.nextAction is string && data.nextAction.size() >= 0 && data.nextAction.size() <= 500
+        && isValidStringList(data.relatedLinks, 20, 500)
+        && isValidOptionalId(data.linkedProjectId)
+        && isValidOptionalId(data.linkedGoalId)
+        && data.category is string && data.category.size() >= 0 && data.category.size() <= 100
+        && isValidStringList(data.tags, 20, 64)
+        && data.pinned is bool
+        && data.archived is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidProjectOrGoal(data) {
+      return data.keys().hasAll([
+          'ownerId', 'recordType', 'name', 'description', 'status',
+          'category', 'priority', 'startDate', 'targetDate',
+          'parentProjectId', 'linkedGoalId', 'measurableOutcome',
+          'progress', 'isManualProgress', 'nextAction',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'recordType', 'name', 'description', 'status',
+          'category', 'priority', 'startDate', 'targetDate',
+          'parentProjectId', 'linkedGoalId', 'measurableOutcome',
+          'progress', 'isManualProgress', 'nextAction',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.recordType is string && data.recordType.size() >= 4 && data.recordType.size() <= 12 && data.recordType in ['project', 'milestone', 'goal']
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 300
+        && data.description is string && data.description.size() >= 0 && data.description.size() <= 5000
+        && data.status is string && data.status.size() >= 6 && data.status.size() <= 15 && data.status in ['not_started', 'active', 'on_hold', 'completed', 'archived']
+        && data.category is string && data.category.size() >= 0 && data.category.size() <= 100
+        && data.priority is string && data.priority.size() >= 3 && data.priority.size() <= 10 && data.priority in ['low', 'normal', 'high', 'urgent']
+        && data.startDate is string && data.startDate.size() >= 0 && data.startDate.size() <= 40
+        && data.targetDate is string && data.targetDate.size() >= 0 && data.targetDate.size() <= 40
+        && isValidOptionalId(data.parentProjectId)
+        && isValidOptionalId(data.linkedGoalId)
+        && data.measurableOutcome is string && data.measurableOutcome.size() >= 0 && data.measurableOutcome.size() <= 1000
+        && data.progress is number && data.progress >= 0 && data.progress <= 100
+        && data.isManualProgress is bool
+        && data.nextAction is string && data.nextAction.size() >= 0 && data.nextAction.size() <= 500
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidHabitOrLog(data) {
+      return data.keys().hasAll([
+          'ownerId', 'logType', 'title', 'description', 'category',
+          'icon', 'scheduleType', 'scheduleDays', 'targetFrequency',
+          'date', 'occurrenceStatus', 'durationMinutes', 'xpAmount',
+          'sourceEntityId', 'archived', 'entries', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'logType', 'title', 'description', 'category',
+          'icon', 'scheduleType', 'scheduleDays', 'targetFrequency',
+          'date', 'occurrenceStatus', 'durationMinutes', 'xpAmount',
+          'sourceEntityId', 'archived', 'entries', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.logType is string && data.logType.size() >= 5 && data.logType.size() <= 20
+        && data.logType in ['habit', 'habit_occurrence', 'focus_session', 'daily_review', 'weekly_review', 'xp_transaction', 'achievement']
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 300
+        && data.description is string && data.description.size() >= 0 && data.description.size() <= 10000
+        && data.category is string && data.category.size() >= 0 && data.category.size() <= 100
+        && data.icon is string && data.icon.size() >= 0 && data.icon.size() <= 50
+        && data.scheduleType is string && data.scheduleType.size() >= 4 && data.scheduleType.size() <= 12 && data.scheduleType in ['daily', 'weekdays', 'weekly', 'custom', 'none']
+        && isValidStringList(data.scheduleDays, 10, 20)
+        && data.targetFrequency is number && data.targetFrequency >= 0 && data.targetFrequency <= 365
+        && data.date is string && data.date.size() >= 0 && data.date.size() <= 40
+        && data.occurrenceStatus is string && data.occurrenceStatus.size() >= 4 && data.occurrenceStatus.size() <= 12 && data.occurrenceStatus in ['completed', 'skipped', 'missed', 'none']
+        && data.durationMinutes is number && data.durationMinutes >= 0 && data.durationMinutes <= 1440
+        && data.xpAmount is number && data.xpAmount >= -10000 && data.xpAmount <= 10000
+        && isValidOptionalId(data.sourceEntityId)
+        && data.archived is bool
+        && isValidStringList(data.entries, 30, 2000)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // 4. Collection Rules
+    match /user_preferences/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn()
+        && isValidId(userId)
+        && userId == request.auth.uid
+        && isValidUserPreference(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && isValidId(userId)
+        && userId == request.auth.uid
+        && isValidUserPreference(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'theme', 'energyLevel', 'energyNote',
+          'focusDuration', 'shortBreakDuration', 'longBreakDuration',
+          'workStartHour', 'workEndHour', 'weekStartsOn',
+          'gamificationEnabled', 'remindersEnabled',
+          'topPriorities', 'visibleSections', 'updatedAt'
+        ]);
+      allow delete: if isSignedIn() && isValidId(userId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /tasks/{taskId} {
+      allow get: if isSignedIn() && isValidId(taskId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn()
+        && isValidId(taskId)
+        && isValidTask(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (incoming().projectId == '' || (exists(/databases/$(database)/documents/projects_goals/$(incoming().projectId)) && get(/databases/$(database)/documents/projects_goals/$(incoming().projectId)).data.ownerId == request.auth.uid));
+      allow update: if isSignedIn()
+        && isValidId(taskId)
+        && isValidTask(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'description', 'completed', 'priority',
+          'dueDate', 'startDate', 'scheduledStart', 'scheduledEnd',
+          'estimatedMinutes', 'actualMinutes', 'category', 'projectId',
+          'milestoneId', 'tags', 'subtasks', 'dependencyIds',
+          'recurrence', 'energyRequired', 'archived', 'updatedAt'
+        ]);
+      allow delete: if isSignedIn() && isValidId(taskId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /calendar_events/{eventId} {
+      allow get: if isSignedIn() && isValidId(eventId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn()
+        && isValidId(eventId)
+        && isValidCalendarEvent(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && isValidId(eventId)
+        && isValidCalendarEvent(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'kind', 'date', 'startTime', 'endTime',
+          'taskId', 'projectId', 'category', 'location', 'notes',
+          'recurrence', 'isFixed', 'completed', 'updatedAt'
+        ]);
+      allow delete: if isSignedIn() && isValidId(eventId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /knowledge_items/{itemId} {
+      allow get: if isSignedIn() && isValidId(itemId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn()
+        && isValidId(itemId)
+        && isValidKnowledgeItem(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && isValidId(itemId)
+        && isValidKnowledgeItem(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'itemType', 'title', 'content', 'ideaStatus',
+          'whyItMatters', 'nextAction', 'relatedLinks', 'linkedProjectId',
+          'linkedGoalId', 'category', 'tags', 'pinned', 'archived', 'updatedAt'
+        ]);
+      allow delete: if isSignedIn() && isValidId(itemId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /projects_goals/{recordId} {
+      allow get: if isSignedIn() && isValidId(recordId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn()
+        && isValidId(recordId)
+        && isValidProjectOrGoal(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && isValidId(recordId)
+        && isValidProjectOrGoal(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'recordType', 'name', 'description', 'status',
+          'category', 'priority', 'startDate', 'targetDate',
+          'parentProjectId', 'linkedGoalId', 'measurableOutcome',
+          'progress', 'isManualProgress', 'nextAction', 'updatedAt'
+        ]);
+      allow delete: if isSignedIn() && isValidId(recordId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /habits_logs/{logId} {
+      allow get: if isSignedIn() && isValidId(logId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn()
+        && isValidId(logId)
+        && isValidHabitOrLog(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && isValidId(logId)
+        && isValidHabitOrLog(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        // Terminal state locking: XP transactions and earned achievements cannot be mutated after creation
+        && existing().logType != 'xp_transaction'
+        && existing().logType != 'achievement'
+        && incoming().logType == existing().logType
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'description', 'category', 'icon',
+          'scheduleType', 'scheduleDays', 'targetFrequency',
+          'date', 'occurrenceStatus', 'durationMinutes', 'xpAmount',
+          'sourceEntityId', 'archived', 'entries', 'updatedAt'
+        ]);
+      allow delete: if isSignedIn() && isValidId(logId) && existing().ownerId == request.auth.uid;
+    }
+  }
+}

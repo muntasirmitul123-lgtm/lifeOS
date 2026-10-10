@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-main: #0B0F0D;
+    --bg-secondary: #111713;
+    --bg-elevated: #171E19;
+    --bg-card: #1D2620;
+    --accent-primary: #79D99A;
+    --accent-secondary: #B5DDBF;
+    --text-main: #F0F4F0;
+    --text-secondary: #99A69C;
+    --text-muted: #68766D;
+    --border-subtle: #29342C;
+    --status-warning: #E8B86D;
+    --status-error: #E87979;
+  }
+
+  html.light {
+    --bg-main: #F5F7F5;
+    --bg-secondary: #EBF0EC;
+    --bg-elevated: #FFFFFF;
+    --bg-card: #E2EAE4;
+    --accent-primary: #1F7A44;
+    --accent-secondary: #2D5A3E;
+    --text-main: #101712;
+    --text-secondary: #435247;
+    --text-muted: #6C7D71;
+    --border-subtle: #D0DCD3;
+    --status-warning: #B87514;
+    --status-error: #C83737;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .font-mono,
+  .tabular-nums {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* iPhone Safe Area Utilities */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+/* Reduced motion compliance */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Subtle custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #29342C;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3A493E;
+}
